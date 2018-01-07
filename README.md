@@ -49,7 +49,9 @@ specificClient.update(newAttributes);
 specificClient.delete();
 ```
 
-Because the data hub uses caching, we don't *have* to pass the client around.
+We can extend the human readable DSL by teaching our objects about relations. Our client above may have a invoices, for example. The implementation will use a simple mixin to teach the client to provide invoice data.
+
+Because the data hub uses caching, we can access invoices through the data hub.
 
 ```
 invoiceList = dataHub.client.get({id: clientId}).invoiceList();
@@ -91,3 +93,23 @@ invoice = this.props.client.invoice({id: invoiceNumber})
 ```
 
 [JSCache]: https://github.com/twoodcock/JSCache
+
+# Refactoring the DSL
+
+It might be better to refine the DSL for the hub. This requires more class
+customization.
+
+```
+invoice = dataHub.client("ActualClientID").invoice(42);
+invoicesByClient = dataHub.listClients(criteria)
+.then (client=>client.listInvoices());
+newClient = dataHub.createClient(attributeObject);
+```
+
+This also points to a problem. When you get a list, what does the list contain?
+Does a list of clients contain a list of full client objects? Does the API
+return all the attributes required to show a client detail page when it returns
+a list? What is the distinction and how do we convert clientList[0] to a client
+we can use to show that detail page? When we do so, does the object stored inside the client list become the fully fleshed out object? (no.)....
+
+TL/DR: I might have a logistics problem to solve.

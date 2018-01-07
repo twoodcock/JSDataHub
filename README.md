@@ -102,7 +102,7 @@ customization.
 ```
 invoice = dataHub.client("ActualClientID").invoice(42);
 invoicesByClient = dataHub.listClients(criteria)
-.then (client=>client.listInvoices());
+.then (list=>list.map((client)=>client.listInvoices()));
 newClient = dataHub.createClient(attributeObject);
 ```
 

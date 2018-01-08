@@ -1,6 +1,6 @@
 # JSDataHub
 
-This is a (currently experimental) data hub implementation fragment.
+Note: This project contains currently experimental code.
 
 # Class Name:
 
@@ -8,36 +8,36 @@ DataHub : Fount of all knowledge, source of all data.
 
 # Summary
 
-This project is about delivering a DSL (domain specific language) that
-decouples the data and API from the application. (I am sure someone has done
-this before and named it something other than 'data hub'.)
+Premise: The application should be able to load the data hub and use it to
+access all its data using a simple syntax. Moreover, when you ask the hub for
+the same object twice, you should, ideally, get the same object instance back.
 
-We are going to make use of a cache module as implemented in [JSCache][].
+* The application should be able to let the data hub take care of talking to
+  the API and deciding what should be cached.
+* The application needs to know what data it is able to get.
+* The application knows nothing about how the data is acquired.
 
 ### Constraints:
 
 * The application imports the data hub and only the data hub.
 * The application gets access to data in a human readable way.
-  eg: <code>client = dataHub.client.get();</code>
+  eg: <code>client = dataHub.client.get(clientAttributes);</code>
 
+The implementation of the data hub is application specific. It might be made
+generic, but the idea is so simple it is probably better not to.
 
-This implementation is very application specific in that the data hub contents
-is tightly coupled to the data it provides. As such, the contents of this
-repository is an example of code. There are some generics that can be tested.
-Notably, there is have used a generic factory class that does the caching
-necessary. The use of the generic class means that caching can be implemented
-and tested once. Testing the caching feature on actual API classes should be
-unnecessary.
-
-Mantra:
-
-* Write code that is easy to change, design code that never has to.
-* Write code that is easy to test, design code so it is already tested.
+This project includes example code for the data hub. It also includes the cache
+from [JSCache][] and a tested generic factory implementation that automates
+caching data.
 
 ## Expected Usage:
 
-> Note: The API is going to return promises rather than actual data. I have
-> left out 'then' and 'cache' logistics.
+> Note: APIs used to acquire data from remote sources are likely to return
+> promises rather than actual data. Most examples here show data being accessed
+> directly.
+>
+> I do not see any problem with caching promises instead of actual object. In
+> fact, I see this as a great advantage.
 
 ```
 import dataHub from './path/to/custom/datahub';
@@ -55,7 +55,7 @@ Because the data hub uses caching, we can access invoices through the data hub.
 
 ```
 invoiceList = dataHub.client.get({id: clientId}).invoiceList();
-invoice = dataHub.client({id: clientId}).invoice({id: invoiceNumber});
+invoice = dataHub.client.get({id: clientId}).invoice({id: invoiceNumber});
 ```
 
 If we ask for something that isn't cached, the data hub will take care of
@@ -72,7 +72,7 @@ invoiceList = dataHub.client.get({id: clientId}).invoiceList()
 .catch((reason) => {
   this.setState({ error: reason });
 });
-invoice = dataHub.client({id: clientId}).invoice({id: invoiceNumber})
+invoice = dataHub.client.get({id: clientId}).invoice({id: invoiceNumber})
 .then((invoice)=>{ this.setState({ invoice: invoice }) })
 .catch((reason) => {
   this.setState({ error: reason });
@@ -106,10 +106,10 @@ invoicesByClient = dataHub.listClients(criteria)
 newClient = dataHub.createClient(attributeObject);
 ```
 
-This also points to a problem. When you get a list, what does the list contain?
-Does a list of clients contain a list of full client objects? Does the API
-return all the attributes required to show a client detail page when it returns
-a list? What is the distinction and how do we convert clientList[0] to a client
-we can use to show that detail page? When we do so, does the object stored inside the client list become the fully fleshed out object? (no.)....
+Does anything need refactoring for this or is the the job of the factory class
+definition (that which extends the generic factory? I think this is the
+implementor's job.
 
-TL/DR: I might have a logistics problem to solve.
+There is an inherant issue: What does a list contain? It might contain an item
+that has partial data. Thas is <code>list[0]</code> might not contain the same
+data as <code>factory.get(itemIdentfier)</code>.

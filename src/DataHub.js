@@ -79,6 +79,7 @@
  */
 
 import Cache from './Cache';
+import GenericFactory from './GenericFactory';
 import Listenable from './Listenable';
 
 /*
@@ -173,80 +174,6 @@ class invoiceFactory extends GenericFactory {
 // not work yet.)
 class MissingAttributeError extends Error {}
 
-/*
- * Here is our generic factory. We implement caching here once.
- *
- * Reminder: This is still in the experimental stage. Syntax and
- * implementation are subject to change. This will also be subjected to
- * rigorous testing to prove it works.
- *
- */
-class GenericFactory {
-  constructor(props) {
-    this.objClass = props.objClass;
-    this.objCache = props.objCache;
-    this.listClass = props.listClass;
-    this.listCache = props.listCache;
-  }
-
-  list(props) {
-    // get and return a list of objects.
-    var rList = this.listCache.get(props);
-    if (!rList) {
-      obj = new this.listClass;
-      rList = obj.get(props);
-      this.listCache.put(props, rList);
-      // Can we set this up to observe changes to cached objects? If an object
-      // that is in the list we've retrieved is cached and that object
-      // changes, can we remove the cached list so that the next request
-      // refreshes the list?
-      // This is ambitious, but can it be done generically?
-      // ... We can subscribe when we cache an object. Can we detect whether
-      // that object is in our cached list?
-      // Something to think about.
-    }
-    return rList;
-  }
-
-  get(props) {
-    // get and return a specific object.
-    var value = this.objCache.get(props);
-    if (!value) {
-      object = this.objClass({props});
-      value = object.get();
-      // value may well be a promise; we don't care.
-      this.objCache.put(props, value);
-      // We assume that the object in the cache is (===) the object we return.
-      // When we are asked for this object again, any changes the app has made
-      // to the object we return now should be changed in the object we return
-      // later. If this isn't the case, we need the object to be observable
-      // and we need to observe changes.
-    }
-    return value;
-  }
-
-  create(props) {
-    object = new this.objClass();
-    // We aren't caching data on create.
-    return object.create(props);
-  }
-}
-
-class ClientList extends Listenable {
-  constructor(props) {
-    super(props);
-    this.props = props; 
-  }
-  get(props) {
-    return this.props.API.getClientList(props)
-    .then((list) => {
-      this.list = list;
-      this.onLoad(data);
-      return this;
-    });
-  }
-
-}
 
 /*
  * Client: provide a data source for this client.
@@ -387,4 +314,21 @@ class Invoice extends Listenable {
       return this;
     })
   }
+}
+
+
+class ClientList extends Listenable {
+    constructor(props) {
+        super(props);
+        this.props = props; 
+    }
+    get(props) {
+        return this.props.API.getClientList(props)
+        .then((list) => {
+            this.list = list;
+            this.onLoad(data);
+            return this;
+        });
+    }
+
 }
